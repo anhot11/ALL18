@@ -68,8 +68,10 @@ private data class LiveHeartParticle(
     val sizeDp: Float
 )
 
-@OptIn(UnstableApi::class)
-@kotlin.OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@OptIn(
+    UnstableApi::class,
+    androidx.compose.foundation.ExperimentalFoundationApi::class
+)
 @Composable
 fun TikTokLiveScreen(
     viewModel: TikTokViewModel,
