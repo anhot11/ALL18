@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>All18 (Nexus18) — Media Aggregator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: '#09090b',
+            surface: '#121215',
+            'tube-primary': '#ff9000',
+            'tube-secondary': '#ffa31a',
+            'tiktok-red': '#fe2c55',
+            'tiktok-cyan': '#25f4ee',
+            'x-blue': '#1d9bf0'
+          },
+          keyframes: {
+            heartPulse: {
+              '0%': { transform: 'scale(0.3) rotate(-15deg)', opacity: '0' },
+              '50%': { transform: 'scale(1.2) rotate(0deg)', opacity: '0.95' },
+              '100%': { transform: 'scale(1) rotate(10deg)', opacity: '0' }
+            }
+          },
+          animation: {
+            'heart-burst': 'heartPulse 0.8s ease-out forwards'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #09090b;
+      color: #fafafa;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+  <!-- TOP HEADER -->
+  <header id="app-header" class="sticky top-0 z-30 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 py-2.5 transition-all">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+      <!-- Logo -->
+      <div onclick="switchMode('all18')" class="flex items-center gap-1 cursor-pointer select-none">
+        <span class="text-xl font-black tracking-tight text-white">Nexus</span>
+        <span class="bg-tube-primary text-black font-black text-xs px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm">18</span>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="flex-1 max-w-md relative">
+        <div class="relative flex items-center">
+          <i class="fa-solid fa-magnifying-glass text-zinc-500 absolute left-3 text-xs pointer-events-none"></i>
+          <input
+            id="search-input"
+            type="text"
+            onkeydown="if(event.key==='Enter') performSearch()"
+            placeholder="Search all tubes, GIFs & anime..."
+            class="w-full bg-zinc-900 text-xs text-zinc-100 placeholder-zinc-500 rounded-full pl-8 pr-8 py-1.5 border border-zinc-700 focus:outline-none focus:border-tube-primary transition-all"
+          />
+          <button id="search-clear" onclick="clearSearch()" class="hidden absolute right-2.5 text-zinc-400 hover:text-white text-xs">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 0 dB Mute Toggle -->
+      <button id="mute-toggle" onclick="toggleMute()" class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-900 border border-zinc-700 text-zinc-300">
+        <i id="mute-icon" class="fa-solid fa-volume-xmark text-zinc-400"></i>
+        <span id="mute-text" class="hidden sm:inline">0 dB Safe</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- VIEW CONTAINERS -->
+  <main class="flex-1 w-full pb-20">
+
+    <!-- MODE 1: ALL18 (PORNHUB GRID) -->
+    <div id="view-all18" class="space-y-3 pt-2">
+      <!-- Categories Scroller -->
+      <div class="px-4">
+        <div id="category-chips" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Filter Row -->
+      <div class="px-4 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-1 overflow-x-auto no-scrollbar" id="type-chips">
+          <button onclick="setTypeFilter('all')" class="px-2.5 py-1 rounded-md font-bold bg-zinc-800 text-tube-primary border border-tube-primary/40">All Formats</button>
+          <button onclick="setTypeFilter('video')" class="px-2.5 py-1 rounded-md text-zinc-400 hover:text-white">Videos</button>
+          <button onclick="setTypeFilter('gif')" class="px-2.5 py-1 rounded-md text-zinc-400 hover:text-white">GIFs</button>
+          <button onclick="setTypeFilter('anime')" class="px-2.5 py-1 rounded-md text-zinc-400 hover:text-white">Anime</button>
+        </div>
+        <div class="flex items-center gap-1 text-[11px] text-zinc-400">
+          <span class="text-zinc-500">Duration:</span>
+          <button onclick="setDurationFilter('all')" class="px-1.5 py-0.5 rounded font-bold text-zinc-200">Any</button>
+          <button onclick="setDurationFilter('short')" class="px-1.5 py-0.5 rounded text-zinc-500">&lt;5m</button>
+          <button onclick="setDurationFilter('medium')" class="px-1.5 py-0.5 rounded text-zinc-500">5-20m</button>
+          <button onclick="setDurationFilter('long')" class="px-1.5 py-0.5 rounded text-zinc-500">20m+</button>
+        </div>
+      </div>
+
+      <!-- Video Grid -->
+      <div class="px-4">
+        <div id="grid-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <!-- Populated by JS -->
+        </div>
+        <div id="grid-loading" class="py-8 text-center hidden">
+          <i class="fa-solid fa-circle-notch fa-spin text-tube-primary text-xl"></i>
+          <span class="text-xs text-zinc-400 ml-2">Loading more content...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODE 2: TIKTOK (VERTICAL FEED) -->
+    <div id="view-tiktok" class="hidden relative w-full h-[calc(100dvh-54px)] bg-black overflow-hidden select-none touch-none">
+      <div id="tiktok-card" class="relative w-full h-full flex items-center justify-center bg-black">
+        <!-- Media inserted by JS -->
+        <div id="tiktok-media-container" class="w-full h-full flex items-center justify-center"></div>
+
+        <!-- Overlays -->
+        <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 pointer-events-none"></div>
+
+        <!-- Left details -->
+        <div class="absolute bottom-4 left-4 right-20 text-white z-20">
+          <div class="flex items-center gap-2 mb-2">
+            <div id="tiktok-avatar" class="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-600 flex items-center justify-center overflow-hidden text-xs font-bold text-tiktok-cyan"></div>
+            <div class="flex items-center gap-1.5">
+              <span id="tiktok-author" class="text-sm font-bold">@creator</span>
+              <i class="fa-solid fa-circle-check text-tiktok-cyan text-xs"></i>
+            </div>
+          </div>
+          <p id="tiktok-title" class="text-sm font-medium line-clamp-2 text-zinc-200 mb-2 drop-shadow"></p>
+          <div id="tiktok-tags" class="flex flex-wrap gap-1.5 mb-2 text-xs font-semibold text-zinc-300"></div>
+          <div class="flex items-center gap-2 text-xs text-zinc-300">
+            <i class="fa-solid fa-compact-disc fa-spin text-tiktok-red text-sm"></i>
+            <span id="tiktok-sound" class="truncate max-w-[180px]">Original Sound • All18 Safe</span>
+          </div>
+        </div>
+
+        <!-- Right Action Bar -->
+        <div class="absolute right-3 bottom-6 z-20 flex flex-col items-center gap-4 text-white">
+          <button onclick="tiktokToggleLike()" class="flex flex-col items-center group active:scale-90 transition-transform">
+            <div id="tiktok-like-btn" class="p-3 bg-zinc-900/70 rounded-full">
+              <i id="tiktok-like-icon" class="fa-solid fa-heart text-2xl"></i>
+            </div>
+            <span id="tiktok-likes-count" class="text-[11px] font-bold mt-1 drop-shadow">12.4K</span>
+          </button>
+
+          <button onclick="tiktokSave()" class="flex flex-col items-center active:scale-90 transition-transform">
+            <div id="tiktok-save-btn" class="p-3 bg-zinc-900/70 rounded-full">
+              <i class="fa-solid fa-bookmark text-2xl"></i>
+            </div>
+            <span class="text-[11px] font-bold mt-1 drop-shadow">Save</span>
+          </button>
+
+          <button onclick="tiktokShare()" class="flex flex-col items-center active:scale-90 transition-transform">
+            <div class="p-3 bg-zinc-900/70 rounded-full">
+              <i class="fa-solid fa-share text-2xl"></i>
+            </div>
+            <span class="text-[11px] font-bold mt-1 drop-shadow">Share</span>
+          </button>
+
+          <button onclick="toggleMute()" class="flex flex-col items-center active:scale-90 transition-transform">
+            <div class="p-3 bg-zinc-900/70 rounded-full">
+              <i id="tiktok-sound-icon" class="fa-solid fa-volume-xmark text-2xl text-zinc-400"></i>
+            </div>
+            <span id="tiktok-sound-label" class="text-[11px] font-bold mt-1 drop-shadow">0 dB</span>
+          </button>
+        </div>
+
+        <!-- Heart burst container -->
+        <div id="heart-burst-box" class="absolute pointer-events-none inset-0 flex items-center justify-center hidden">
+          <i class="fa-solid fa-heart text-7xl text-tiktok-red animate-heart-burst"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODE 3: X TIMELINE -->
+    <div id="view-x" class="hidden max-w-2xl mx-auto border-x border-zinc-800 min-h-screen">
+      <!-- Tabs -->
+      <div class="sticky top-12 z-20 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800 flex items-center justify-around">
+        <button onclick="setXTab('forYou')" id="xtab-forYou" class="flex-1 py-3 text-sm font-bold text-center text-white relative">
+          <span>For you</span>
+          <div id="xtab-forYou-indicator" class="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-x-blue rounded-full"></div>
+        </button>
+        <button onclick="setXTab('following')" id="xtab-following" class="flex-1 py-3 text-sm font-bold text-center text-zinc-500 relative">
+          <span>Following</span>
+          <div id="xtab-following-indicator" class="hidden absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-x-blue rounded-full"></div>
+        </button>
+      </div>
+
+      <!-- Tweets Feed -->
+      <div id="x-feed-container" class="divide-y divide-zinc-800">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- MODE 4: FAVORITES -->
+    <div id="view-favorites" class="hidden max-w-5xl mx-auto px-4 py-4">
+      <h2 class="text-lg font-black mb-3">Saved Library & History</h2>
+      <div id="favorites-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- MODE 5: SETTINGS -->
+    <div id="view-settings" class="hidden max-w-3xl mx-auto px-4 py-4 space-y-4">
+      <h2 class="text-lg font-black flex items-center gap-2">
+        <i class="fa-solid fa-sliders text-tube-primary"></i>
+        <span>Provider Registry & Settings</span>
+      </h2>
+      <div id="settings-providers-list" class="space-y-2">
+        <!-- Populated by JS -->
+      </div>
+      <div class="p-4 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-400 space-y-2">
+        <h4 class="font-bold text-white text-sm">Legal & Ethical Compliance</h4>
+        <p>Nexus18 / All18 operates exclusively as a search and metadata indexer of free public sites listed on ThePornDude. We do not host, store, mirror or rehost videos. All rights belong to respective owners.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- MEDIA MODAL PLAYER -->
+  <div id="media-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md p-3 sm:p-6 hidden items-center justify-center overflow-y-auto">
+    <div class="relative w-full max-w-4xl bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl my-auto">
+      <div class="flex items-center justify-between px-4 py-2 bg-zinc-900 border-b border-zinc-800">
+        <span id="modal-provider" class="text-xs font-bold px-2 py-0.5 rounded bg-tube-primary text-black">RedTube</span>
+        <button onclick="closeModal()" class="p-1 text-zinc-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <div id="modal-player-box" class="relative aspect-video w-full bg-black flex items-center justify-center">
+        <!-- Player iframe/video inserted here -->
+      </div>
+      <div class="p-4 space-y-3">
+        <h2 id="modal-title" class="text-base font-bold text-white leading-snug"></h2>
+        <div class="flex items-center justify-between text-xs text-zinc-400">
+          <div class="flex items-center gap-3">
+            <span id="modal-views"></span>
+            <span id="modal-duration"></span>
+          </div>
+          <button id="modal-fav-btn" onclick="modalToggleFav()" class="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-900 font-semibold flex items-center gap-1.5">
+            <i class="fa-solid fa-heart text-red-500"></i>
+            <span>Favorite</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-lg border-t border-zinc-800/80 px-2 py-1 select-none">
+    <div class="max-w-xl mx-auto flex items-center justify-around text-center">
+      <button onclick="switchMode('all18')" id="nav-all18" class="flex flex-col items-center py-1 px-3 text-tube-primary">
+        <i class="fa-solid fa-table-cells text-xl"></i>
+        <span class="text-[10px] font-bold mt-0.5">All18</span>
+      </button>
+      <button onclick="switchMode('tiktok')" id="nav-tiktok" class="flex flex-col items-center py-1 px-3 text-zinc-400 hover:text-white">
+        <i class="fa-solid fa-fire text-xl"></i>
+        <span class="text-[10px] font-bold mt-0.5">TikTok</span>
+      </button>
+      <button onclick="switchMode('x')" id="nav-x" class="flex flex-col items-center py-1 px-3 text-zinc-400 hover:text-white">
+        <i class="fa-brands fa-x-twitter text-xl"></i>
+        <span class="text-[10px] font-bold mt-0.5">𝕏 Feed</span>
+      </button>
+      <button onclick="switchMode('favorites')" id="nav-favorites" class="flex flex-col items-center py-1 px-3 text-zinc-400 hover:text-white">
+        <i class="fa-solid fa-heart text-xl"></i>
+        <span class="text-[10px] font-bold mt-0.5">Saved</span>
+      </button>
+      <button onclick="switchMode('settings')" id="nav-settings" class="flex flex-col items-center py-1 px-3 text-zinc-400 hover:text-white">
+        <i class="fa-solid fa-sliders text-xl"></i>
+        <span class="text-[10px] font-bold mt-0.5">Settings</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- APPLICATION CLIENT ENGINE -->
+  <script>
+    // State
+    let currentMode = 'all18';
+    let isMuted = true;
+    let items = [];
+    let favorites = JSON.parse(localStorage.getItem('all18_favs') || '[]');
+    let currentModalItem = null;
+    let tiktokIndex = 0;
+    let lastTap = 0;
+    let selectedCategory = 'Trending';
+    let selectedType = 'all';
+    let selectedDuration = 'all';
+
+    const CATEGORIES = ['Trending', '4K Ultra HD', 'Amateur', 'Blowjob', 'Brunette', 'POV', 'MILF', 'Anime & Hentai', 'Animated GIFs', 'Cosplay', 'Lesbian'];
+
+    const PROVIDERS = [
+      { id: 'redtube', name: 'RedTube', icon: '🔴', enabled: true },
+      { id: 'eporner', name: 'EPORNER', icon: '⚡', enabled: true },
+      { id: 'rule34', name: 'Rule34', icon: '🎨', enabled: true },
+      { id: 'danbooru', name: 'Danbooru', icon: '🖼️', enabled: true },
+      { id: 'gelbooru', name: 'Gelbooru', icon: '🌸', enabled: true },
+      { id: 'redgifs', name: 'RedGIFs', icon: '🎞️', enabled: true },
+      { id: 'spankbang', name: 'SpankBang', icon: '💥', enabled: true },
+      { id: 'xvideos', name: 'XVideos', icon: '❌', enabled: true },
+      { id: 'xnxx', name: 'XNXX', icon: '✖️', enabled: true },
+      { id: 'hentaimama', name: 'HentaiMama', icon: '🍙', enabled: true }
+    ];
+
+    // Curated High-Definition Initial Feed Items
+    const SEED_FEED = [
+      {
+        id: 'redtube:1234',
+        provider: 'redtube',
+        providerName: 'RedTube',
+        title: 'Sensational Passionate HD Romance & Close POV Experience',
+        thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=60',
+        preview: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=60',
+        duration: 742,
+        type: 'video',
+        views: 182400,
+        rating: 96,
+        embedUrl: 'https://embed.redtube.com/?id=1234&autoplay=1',
+        sourceUrl: 'https://www.redtube.com/1234',
+        tags: ['HD', 'Amateur', 'POV', 'Romance'],
+        author: { name: 'RedTube Verified', avatar: '' }
+      },
+      {
+        id: 'eporner:4k99',
+        provider: 'eporner',
+        providerName: 'EPORNER 4K',
+        title: 'Ultra High Definition 4K 60FPS Stunning Beach Scene',
+        thumbnail: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&auto=format&fit=crop&q=60',
+        duration: 1245,
+        type: 'video',
+        views: 450120,
+        rating: 98,
+        embedUrl: 'https://www.eporner.com/embed/4k99/',
+        sourceUrl: 'https://www.eporner.com/hd-porn/4k99/',
+        tags: ['4K', '1080p', 'Beach', 'Trending'],
+        author: { name: 'EPORNER Studio', avatar: '' }
+      },
+      {
+        id: 'redgifs:loop1',
+        provider: 'redgifs',
+        providerName: 'RedGIFs',
+        title: 'Cosplay Dance & Seductive Short Loop with Audio',
+        thumbnail: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600&auto=format&fit=crop&q=60',
+        duration: 24,
+        type: 'gif',
+        views: 94000,
+        likes: 1820,
+        embedUrl: 'https://www.redgifs.com/ifr/loop1',
+        sourceUrl: 'https://www.redgifs.com/watch/loop1',
+        tags: ['Cosplay', 'Loop', 'Dance', 'TikTok'],
+        author: { name: 'CosplayGoddess', avatar: '' }
+      },
+      {
+        id: 'rule34:anime88',
+        provider: 'rule34',
+        providerName: 'Rule34',
+        title: '3D Blender 4K Cyberpunk Futuristic Animation',
+        thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=60',
+        duration: 48,
+        type: 'anime',
+        views: 128900,
+        rating: 94,
+        embedUrl: 'https://rule34.xxx',
+        sourceUrl: 'https://rule34.xxx/index.php?page=post&s=view&id=anime88',
+        tags: ['3D', 'Blender', 'Cyberpunk', 'Animation'],
+        author: { name: 'SFM Master', avatar: '' }
+      },
+      {
+        id: 'spankbang:sb45',
+        provider: 'spankbang',
+        providerName: 'SpankBang',
+        title: 'Glamour Model Sensual Afternoon Sunlight Session',
+        thumbnail: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=60',
+        duration: 890,
+        type: 'video',
+        views: 290100,
+        rating: 95,
+        embedUrl: 'https://spankbang.com/sb45/embed/',
+        sourceUrl: 'https://spankbang.com/sb45/video/',
+        tags: ['Glamour', 'Trending', 'Model'],
+        author: { name: 'SpankBang Official', avatar: '' }
+      }
+    ];
+
+    items = [...SEED_FEED];
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCategoryChips();
+      renderGrid();
+      renderTikTokCard();
+      renderXTimeline();
+      renderProvidersSettings();
+      setupTikTokGestures();
+    });
+
+    // Navigation
+    function switchMode(mode) {
+      currentMode = mode;
+      ['all18', 'tiktok', 'x', 'favorites', 'settings'].forEach(m => {
+        const view = document.getElementById(`view-${m}`);
+        const nav = document.getElementById(`nav-${m}`);
+        if (view) view.classList.toggle('hidden', m !== mode);
+        if (nav) {
+          nav.className = m === mode
+            ? (m === 'tiktok' ? 'flex flex-col items-center py-1 px-3 text-tiktok-cyan' : m === 'x' ? 'flex flex-col items-center py-1 px-3 text-x-blue' : 'flex flex-col items-center py-1 px-3 text-tube-primary')
+            : 'flex flex-col items-center py-1 px-3 text-zinc-400 hover:text-white';
+        }
+      });
+      if (mode === 'favorites') renderFavorites();
+      if (mode === 'tiktok') renderTikTokCard();
+    }
+
+    // 0 dB Audio Mute
+    function toggleMute() {
+      isMuted = !isMuted;
+      const icon = document.getElementById('mute-icon');
+      const text = document.getElementById('mute-text');
+      const btn = document.getElementById('mute-toggle');
+      if (isMuted) {
+        icon.className = 'fa-solid fa-volume-xmark text-zinc-400';
+        text.innerText = '0 dB Safe';
+        btn.className = 'flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-900 border border-zinc-700 text-zinc-300';
+      } else {
+        icon.className = 'fa-solid fa-volume-high text-emerald-400';
+        text.innerText = 'Audio On';
+        btn.className = 'flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/40 text-emerald-400';
+      }
+      const vid = document.querySelector('#tiktok-media-container video');
+      if (vid) vid.muted = isMuted;
+    }
+
+    // Category chips
+    function renderCategoryChips() {
+      const c = document.getElementById('category-chips');
+      c.innerHTML = CATEGORIES.map(cat => `
+        <button onclick="selectCategory('${cat}')" class="whitespace-nowrap px-3.5 py-1 rounded-full text-xs font-semibold ${selectedCategory === cat ? 'bg-tube-primary text-black scale-105' : 'bg-zinc-900 text-zinc-300 border border-zinc-800'} transition-all">
+          ${cat}
+        </button>
+      `).join('');
+    }
+
+    function selectCategory(cat) {
+      selectedCategory = cat;
+      renderCategoryChips();
+      renderGrid();
+    }
+
+    function setTypeFilter(t) {
+      selectedType = t;
+      renderGrid();
+    }
+
+    function setDurationFilter(d) {
+      selectedDuration = d;
+      renderGrid();
+    }
+
+    // All18 Grid
+    function renderGrid() {
+      const container = document.getElementById('grid-container');
+      let filtered = [...items];
+      if (selectedType !== 'all') {
+        filtered = filtered.filter(i => i.type === selectedType);
+      }
+      container.innerHTML = filtered.map(item => `
+        <div onclick="openModal('${item.id}')" class="group cursor-pointer bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800/80 hover:border-zinc-700 transition-all flex flex-col">
+          <div class="relative aspect-video bg-zinc-950">
+            <img src="${item.thumbnail}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            ${item.duration ? `<span class="absolute bottom-1.5 right-1.5 bg-black/85 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">${Math.floor(item.duration/60)}:${(item.duration%60).toString().padStart(2,'0')}</span>` : ''}
+            <span class="absolute top-1.5 left-1.5 bg-black/80 text-[10px] text-zinc-300 font-semibold px-2 py-0.5 rounded-full border border-zinc-700/50">${item.providerName || item.provider}</span>
+          </div>
+          <div class="p-3 flex-1 flex flex-col justify-between">
+            <h4 class="text-xs font-semibold text-zinc-100 line-clamp-2 leading-snug group-hover:text-tube-primary transition-colors">${item.title}</h4>
+            <div class="flex items-center justify-between text-[11px] text-zinc-400 mt-2 pt-1 border-t border-zinc-800">
+              <span>${item.views ? item.views.toLocaleString() + ' views' : ''}</span>
+              ${item.rating ? `<span class="text-emerald-400 font-semibold">${item.rating}%</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // TikTok Feed
+    function renderTikTokCard() {
+      if (!items.length) return;
+      const item = items[tiktokIndex % items.length];
+      const mediaBox = document.getElementById('tiktok-media-container');
+      mediaBox.innerHTML = `
+        <img src="${item.preview || item.thumbnail}" class="w-full h-full object-contain md:object-cover" />
+      `;
+      document.getElementById('tiktok-avatar').innerText = (item.providerName || item.provider).slice(0,2).toUpperCase();
+      document.getElementById('tiktok-author').innerText = '@' + (item.provider.toLowerCase());
+      document.getElementById('tiktok-title').innerText = item.title;
+      document.getElementById('tiktok-tags').innerHTML = (item.tags || []).slice(0,3).map(t => `<span>#${t}</span>`).join(' ');
+      document.getElementById('tiktok-sound').innerText = 'Original Audio • ' + (item.providerName || item.provider);
+      document.getElementById('tiktok-likes-count').innerText = (item.likes || 120).toLocaleString();
+    }
+
+    function setupTikTokGestures() {
+      const card = document.getElementById('view-tiktok');
+      let startY = 0;
+      card.addEventListener('touchstart', e => { startY = e.touches[0].clientY; });
+      card.addEventListener('touchend', e => {
+        const diff = startY - e.changedTouches[0].clientY;
+        if (diff > 50) {
+          tiktokIndex = (tiktokIndex + 1) % items.length;
+          renderTikTokCard();
+        } else if (diff < -50 && tiktokIndex > 0) {
+          tiktokIndex--;
+          renderTikTokCard();
+        }
+      });
+      card.addEventListener('click', e => {
+        const now = Date.now();
+        if (now - lastTap < 300) {
+          // Double tap heart burst
+          const burst = document.getElementById('heart-burst-box');
+          burst.classList.remove('hidden');
+          setTimeout(() => burst.classList.add('hidden'), 800);
+          tiktokToggleLike();
+        }
+        lastTap = now;
+      });
+    }
+
+    function tiktokToggleLike() {
+      const item = items[tiktokIndex % items.length];
+      toggleFavItem(item);
+      const icon = document.getElementById('tiktok-like-icon');
+      icon.className = isFav(item.id) ? 'fa-solid fa-heart text-2xl text-tiktok-red' : 'fa-solid fa-heart text-2xl';
+    }
+
+    function tiktokSave() {
+      const item = items[tiktokIndex % items.length];
+      toggleFavItem(item);
+    }
+
+    function tiktokShare() {
+      const item = items[tiktokIndex % items.length];
+      if (navigator.share) navigator.share({ title: item.title, url: item.sourceUrl });
+      else alert('Link copied: ' + item.sourceUrl);
+    }
+
+    // X Timeline
+    function renderXTimeline() {
+      const container = document.getElementById('x-feed-container');
+      container.innerHTML = items.map((item, idx) => `
+        <article class="p-4 hover:bg-zinc-900/30 transition-colors flex gap-3">
+          <div class="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-xs text-x-blue shrink-0">
+            ${(item.providerName || item.provider).slice(0,2).toUpperCase()}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-bold text-sm text-zinc-100">${item.providerName || item.provider}</span>
+              <i class="fa-solid fa-circle-check text-x-blue text-xs"></i>
+              <span class="text-xs text-zinc-500">@${item.provider}</span>
+              <span class="text-zinc-600 text-xs">·</span>
+              <span class="text-xs text-zinc-500">${(idx*3+5)%45}m</span>
+            </div>
+            <p class="text-sm text-zinc-200 mt-1 mb-2">${item.title}</p>
+            <div onclick="openModal('${item.id}')" class="relative rounded-2xl overflow-hidden border border-zinc-800 aspect-video bg-zinc-950 cursor-pointer">
+              <img src="${item.thumbnail}" class="w-full h-full object-cover" />
+              <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+                <i class="fa-solid fa-play text-white text-xl p-3 bg-x-blue/90 rounded-full"></i>
+              </div>
+            </div>
+            <div class="flex items-center justify-between text-zinc-500 mt-3 text-xs max-w-sm">
+              <span class="hover:text-x-blue"><i class="fa-regular fa-comment mr-1"></i> ${(idx*4+3)%20}</span>
+              <span class="hover:text-emerald-400"><i class="fa-solid fa-retweet mr-1"></i> ${(idx*7+2)%30}</span>
+              <span onclick="toggleFavItem(items[${idx}])" class="hover:text-pink-500 cursor-pointer"><i class="fa-regular fa-heart mr-1"></i> ${(item.likes || 120)}</span>
+              <span onclick="toggleFavItem(items[${idx}])" class="hover:text-x-blue cursor-pointer"><i class="fa-regular fa-bookmark"></i></span>
+            </div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function setXTab(tab) {
+      document.getElementById('xtab-forYou-indicator').classList.toggle('hidden', tab !== 'forYou');
+      document.getElementById('xtab-following-indicator').classList.toggle('hidden', tab !== 'following');
+      document.getElementById('xtab-forYou').className = tab === 'forYou' ? 'flex-1 py-3 text-sm font-bold text-center text-white relative' : 'flex-1 py-3 text-sm font-bold text-center text-zinc-500 relative';
+      document.getElementById('xtab-following').className = tab === 'following' ? 'flex-1 py-3 text-sm font-bold text-center text-white relative' : 'flex-1 py-3 text-sm font-bold text-center text-zinc-500 relative';
+    }
+
+    // Modal
+    function openModal(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      currentModalItem = item;
+      document.getElementById('modal-provider').innerText = item.providerName || item.provider;
+      document.getElementById('modal-title').innerText = item.title;
+      document.getElementById('modal-views').innerText = item.views ? item.views.toLocaleString() + ' views' : '';
+      document.getElementById('modal-duration').innerText = item.duration ? Math.floor(item.duration/60) + ':' + (item.duration%60).toString().padStart(2,'0') : '';
+      
+      const box = document.getElementById('modal-player-box');
+      if (item.embedUrl) {
+        box.innerHTML = `<iframe src="${item.embedUrl}" class="w-full h-full border-0" allowfullscreen allow="autoplay"></iframe>`;
+      } else {
+        box.innerHTML = `<img src="${item.thumbnail}" class="w-full h-full object-contain" />`;
+      }
+      
+      const modal = document.getElementById('media-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('media-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.getElementById('modal-player-box').innerHTML = '';
+      currentModalItem = null;
+    }
+
+    // Favorites
+    function isFav(id) { return favorites.some(f => f.id === id); }
+    function toggleFavItem(item) {
+      if (isFav(item.id)) favorites = favorites.filter(f => f.id !== item.id);
+      else favorites.unshift(item);
+      localStorage.setItem('all18_favs', JSON.stringify(favorites));
+    }
+    function modalToggleFav() {
+      if (currentModalItem) toggleFavItem(currentModalItem);
+    }
+    function renderFavorites() {
+      const c = document.getElementById('favorites-container');
+      if (!favorites.length) {
+        c.innerHTML = '<div class="col-span-full py-12 text-center text-zinc-500">No saved items yet. Tap the heart icon to save!</div>';
+        return;
+      }
+      c.innerHTML = favorites.map(item => `
+        <div onclick="openModal('${item.id}')" class="bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 cursor-pointer">
+          <img src="${item.thumbnail}" class="aspect-video w-full object-cover" />
+          <div class="p-2.5">
+            <h4 class="text-xs font-semibold line-clamp-1">${item.title}</h4>
+            <span class="text-[10px] text-zinc-500">${item.providerName || item.provider}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Settings
+    function renderProvidersSettings() {
+      const list = document.getElementById('settings-providers-list');
+      list.innerHTML = PROVIDERS.map(p => `
+        <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">${p.icon}</span>
+            <div>
+              <h4 class="text-xs font-bold text-white">${p.name}</h4>
+              <span class="text-[10px] text-emerald-400">Verified Free Aggregation</span>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Active</span>
+        </div>
+      `).join('');
+    }
+
+    // Search
+    function performSearch() {
+      const q = document.getElementById('search-input').value.trim().toLowerCase();
+      if (!q) return;
+      document.getElementById('search-clear').classList.remove('hidden');
+      // Filter items
+      const matched = SEED_FEED.filter(i => i.title.toLowerCase().includes(q) || (i.tags && i.tags.some(t => t.toLowerCase().includes(q))));
+      items = matched.length ? matched : SEED_FEED;
+      renderGrid();
+      renderXTimeline();
+    }
+    function clearSearch() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('search-clear').classList.add('hidden');
+      items = [...SEED_FEED];
+      renderGrid();
+      renderXTimeline();
+    }
+  </script>
+</body>
+</html>

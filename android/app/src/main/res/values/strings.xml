@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">All18</string>
+    <string name="title_activity_main">All18</string>
+    <string name="package_name">y.all18</string>
+    <string name="custom_url_scheme">y.all18</string>
+</resources>
