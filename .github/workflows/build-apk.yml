@@ -1,4 +1,4 @@
-name: Build Android APK (All18)
+name: Build Android APK (All18 Native)
 
 on:
   push:
@@ -13,69 +13,56 @@ permissions:
 
 jobs:
   build-android:
-    name: Compile All18 APK (y.all18)
+    name: Compile All18 APK (com.all18.nativeapp)
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java JDK 21
+      - name: Setup Java JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Sync Capacitor Android
-        run: npx cap sync android
+          java-version: '17'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build APK with Gradle
         run: |
-          cd android
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
       - name: Prepare APK Release Asset
         run: |
           mkdir -p release_builds
-          cp android/app/build/outputs/apk/debug/app-debug.apk release_builds/all18.apk
+          cp app/build/outputs/apk/debug/app-debug.apk release_builds/all18.apk
           ls -lh release_builds/all18.apk
           sha256sum release_builds/all18.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: all18-apk
+          name: all18-native-apk
           path: release_builds/all18.apk
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.1.0
-          name: 'All18 APK v1.1.0 (Official Build)'
+          tag_name: v1.2.0
+          name: 'All18 APK v1.2.0 (Native Android Official)'
           body: |
-            ### 🚀 All18 Android APK v1.1.0 (Official Build)
-            Compilado automáticamente mediante GitHub Actions para el paquete `y.all18`.
+            ### 🚀 All18 Android APK v1.2.0 (Official Native Build)
+            Compilado automáticamente mediante GitHub Actions con la arquitectura nativa en Kotlin y Jetpack Compose (`com.all18.nativeapp`).
 
             #### 🌟 Características
-            - **All18**: UI Pornhub con cuadrícula responsive, filtros de duración y chips de categorías.
-            - **TikTok**: UI TikTok vertical full-screen con doble toque para Me Gusta y rotación de audio.
-            - **𝕏 Feed**: UI Twitter/𝕏 con pestañas "Para ti" y "Siguiendo" y tarjetas interactivas.
-            - **Silencio Total (0 dB)**: Botón global de silencio seguro sin emisiones sonoras accidentales.
-            - **Conectores activos**: RedTube, EPORNER, Rule34, Danbooru, Gelbooru, RedGIFs, SpankBang, XVideos, XNXX, HentaiMama y Pornhub.
+            - **AllTube**: 100% UI Pornhub nativa con catálogo completo de sitios gratuitos.
+            - **TikTok**: 100% UI TikTok vertical full-screen con modo foto y scrubber.
+            - **𝕏 Feed**: 100% UI Twitter / 𝕏 con pestañas dinámicas y reproductor integrado.
+            - **Silencio Total (0 dB)**: Reproducción segura garantizada con `SilentPlayerManager`.
+            - **Bypass Anti-Censura**: DNS sobre HTTPS (`AppDns` con Google y Cloudflare DoH) para evasión de bloqueos ISP.
           files: release_builds/all18.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
