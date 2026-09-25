@@ -1,6 +1,7 @@
 # Nexus18 / All18 (y.all18)
 
-[![Download Android APK](https://img.shields.io/badge/Download-all18n.apk-brightgreen?style=for-the-badge&logo=android)](https://github.com/anhot11/ALL18/releases/download/v1.0.0/all18n.apk)
+[![Download Android APK](https://img.shields.io/badge/Download-all18.apk%20(v1.1.0)-brightgreen?style=for-the-badge&logo=android)](https://github.com/anhot11/ALL18/releases/download/v1.1.0/all18.apk)
+[![Release](https://img.shields.io/github/v/release/anhot11/ALL18?style=for-the-badge)](https://github.com/anhot11/ALL18/releases/latest)
 [![CI Status](https://img.shields.io/badge/CI-Passing-success?style=for-the-badge&logo=githubactions)](.github/workflows/ci.yml)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14.2-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
